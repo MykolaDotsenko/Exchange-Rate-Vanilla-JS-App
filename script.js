@@ -3,16 +3,14 @@ import {
   formatEditableAmount,
   formatMoney,
   formatRate,
-  isValidRatePayload,
-  normalizeCurrencyList,
   parseAmount,
   reciprocalRate,
 } from "./src/exchange.js";
+import { createRateCache } from "./src/rate-cache.js";
+import { fetchCurrencies, fetchRate } from "./src/rate-client.js";
 
-const API_BASE = "https://api.frankfurter.dev/v2";
 const RATE_TIMEOUT_MS = 8000;
-const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-const CACHE_PREFIX = "nordrate:rate:v1:";
+const CURRENCY_TIMEOUT_MS = 4000;
 
 const fallbackCurrencies = [
   { code: "AUD", name: "Australian Dollar" },
@@ -50,16 +48,26 @@ const elements = {
   pairChips: [...document.querySelectorAll(".pair-chip")],
 };
 
-const requiredElements = Object.entries(elements).filter(
+const missingElements = Object.entries(elements).filter(
   ([key, value]) => key !== "pairChips" && !value
 );
 
-if (requiredElements.length > 0) {
+if (missingElements.length > 0) {
   throw new Error(
     "NordRate could not start. Missing UI: " +
-      requiredElements.map(([key]) => key).join(", ")
+      missingElements.map(([key]) => key).join(", ")
   );
 }
+
+function resolveStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+const rateCache = createRateCache({ storage: resolveStorage() });
 
 const state = {
   base: elements.baseCurrency.value,
@@ -70,54 +78,6 @@ const state = {
   rateController: null,
   lastConversion: null,
 };
-
-function cacheKey(base, quote) {
-  return CACHE_PREFIX + base + ":" + quote;
-}
-
-function readCachedRate(base, quote) {
-  try {
-    const raw = localStorage.getItem(cacheKey(base, quote));
-
-    if (!raw) {
-      return null;
-    }
-
-    const cached = JSON.parse(raw);
-    const savedAt = Number(cached.savedAt);
-    const rate = Number(cached.rate);
-
-    if (
-      !Number.isFinite(savedAt) ||
-      Date.now() - savedAt > CACHE_MAX_AGE_MS ||
-      !Number.isFinite(rate) ||
-      rate <= 0 ||
-      typeof cached.date !== "string"
-    ) {
-      localStorage.removeItem(cacheKey(base, quote));
-      return null;
-    }
-
-    return { rate, date: cached.date };
-  } catch {
-    return null;
-  }
-}
-
-function writeCachedRate(base, quote, rate, date) {
-  try {
-    localStorage.setItem(
-      cacheKey(base, quote),
-      JSON.stringify({
-        rate,
-        date,
-        savedAt: Date.now(),
-      })
-    );
-  } catch {
-    // Conversion remains fully functional when storage is unavailable.
-  }
-}
 
 function setRateStatus(label, status) {
   elements.rateStatusText.textContent = label;
@@ -175,13 +135,13 @@ function renderRateDetails() {
     return;
   }
 
-  const inverse = reciprocalRate(state.rate);
-
   if (state.base === state.quote) {
     elements.rate.textContent = "1 " + state.base + " = 1 " + state.quote;
     elements.rateDate.textContent = "Same currency";
     return;
   }
+
+  const inverse = reciprocalRate(state.rate);
 
   elements.rate.textContent =
     "1 " +
@@ -232,10 +192,11 @@ function renderConversion() {
 
   setInputValidity(sourceInput, true);
 
+  const inverseRate = reciprocalRate(state.rate);
   const baseValue =
     state.activeInput === "base"
       ? sourceValue
-      : convertAmount(sourceValue, reciprocalRate(state.rate));
+      : convertAmount(sourceValue, inverseRate);
   const quoteValue =
     state.activeInput === "base"
       ? convertAmount(sourceValue, state.rate)
@@ -258,44 +219,20 @@ function renderConversion() {
   const outputCurrency = state.activeInput === "base" ? state.quote : state.base;
 
   elements.resultValue.textContent = formatMoney(outputValue, outputCurrency);
-  elements.copyResult.disabled = false;
+  elements.copyResult.disabled = !navigator.clipboard?.writeText;
   state.lastConversion = { baseValue, quoteValue };
 }
 
-async function fetchRate(base, quote, signal) {
-  const response = await fetch(
-    API_BASE +
-      "/rate/" +
-      encodeURIComponent(base) +
-      "/" +
-      encodeURIComponent(quote),
-    {
-      headers: { Accept: "application/json" },
-      signal,
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Rate service returned HTTP " + response.status);
-  }
-
-  const payload = await response.json();
-
-  if (!isValidRatePayload(payload, base, quote)) {
-    throw new Error("Rate service returned an unexpected response");
-  }
-
-  return {
-    rate: Number(payload.rate),
-    date: payload.date,
-  };
+function abortCurrentRateRequest() {
+  state.rateController?.abort();
+  state.rateController = null;
 }
 
 async function requestRate() {
   state.base = elements.baseCurrency.value;
   state.quote = elements.quoteCurrency.value;
-  state.rateController?.abort();
 
+  abortCurrentRateRequest();
   setError();
   renderPairChips();
 
@@ -307,7 +244,7 @@ async function requestRate() {
     return;
   }
 
-  const cached = readCachedRate(state.base, state.quote);
+  const cached = rateCache.read(state.base, state.quote);
 
   if (cached) {
     state.rate = cached.rate;
@@ -328,7 +265,9 @@ async function requestRate() {
   const requestedQuote = state.quote;
 
   try {
-    const fresh = await fetchRate(requestedBase, requestedQuote, controller.signal);
+    const fresh = await fetchRate(requestedBase, requestedQuote, {
+      signal: controller.signal,
+    });
 
     if (
       state.rateController !== controller ||
@@ -340,12 +279,15 @@ async function requestRate() {
 
     state.rate = fresh.rate;
     state.rateDate = fresh.date;
-    writeCachedRate(requestedBase, requestedQuote, fresh.rate, fresh.date);
+    rateCache.write(requestedBase, requestedQuote, fresh.rate, fresh.date);
     setRateStatus("Reference rate", "success");
     setError();
     renderConversion();
   } catch (error) {
-    if (controller.signal.aborted && state.rateController !== controller) {
+    const wasSuperseded =
+      controller.signal.aborted && state.rateController !== controller;
+
+    if (wasSuperseded) {
       return;
     }
 
@@ -401,21 +343,14 @@ function populateCurrencySelect(select, currencies, selectedCode) {
 }
 
 async function loadCurrencies() {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(
+    () => controller.abort(),
+    CURRENCY_TIMEOUT_MS
+  );
+
   try {
-    const response = await fetch(API_BASE + "/currencies", {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      return;
-    }
-
-    const currencies = normalizeCurrencyList(await response.json());
-
-    if (currencies.length < 2) {
-      return;
-    }
-
+    const currencies = await fetchCurrencies({ signal: controller.signal });
     const merged = [...currencies];
 
     for (const currency of fallbackCurrencies) {
@@ -429,6 +364,8 @@ async function loadCurrencies() {
     populateCurrencySelect(elements.quoteCurrency, merged, state.quote);
   } catch {
     // The server-rendered popular-currency list remains usable.
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 }
 
@@ -468,7 +405,7 @@ function chooseQuickPair(chip) {
 }
 
 async function copyConversion() {
-  if (!state.lastConversion || !navigator.clipboard) {
+  if (!state.lastConversion || !navigator.clipboard?.writeText) {
     return;
   }
 
@@ -486,11 +423,9 @@ async function copyConversion() {
   try {
     await navigator.clipboard.writeText(text);
     elements.copyLabel.textContent = "Copied";
-    window.setTimeout(() => {
-      elements.copyLabel.textContent = "Copy";
-    }, 1400);
   } catch {
     elements.copyLabel.textContent = "Unavailable";
+  } finally {
     window.setTimeout(() => {
       elements.copyLabel.textContent = "Copy";
     }, 1400);
@@ -523,5 +458,11 @@ for (const chip of elements.pairChips) {
 
 populateCurrencySelect(elements.baseCurrency, fallbackCurrencies, state.base);
 populateCurrencySelect(elements.quoteCurrency, fallbackCurrencies, state.quote);
+
+if (!navigator.clipboard?.writeText) {
+  elements.copyResult.disabled = true;
+  elements.copyResult.title = "Copy is not available in this browser";
+}
+
 loadCurrencies();
 requestRate();
