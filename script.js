@@ -416,14 +416,10 @@ async function loadCurrencies() {
       return;
     }
 
-    const requiredCodes = new Set([state.base, state.quote]);
     const merged = [...currencies];
 
     for (const currency of fallbackCurrencies) {
-      if (
-        requiredCodes.has(currency.code) &&
-        !merged.some((item) => item.code === currency.code)
-      ) {
+      if (!merged.some((item) => item.code === currency.code)) {
         merged.push(currency);
       }
     }
