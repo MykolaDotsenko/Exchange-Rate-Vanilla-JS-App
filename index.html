@@ -1,142 +1,269 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Exchange Rate Calculator</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="NordRate is a fast, privacy-friendly currency converter with daily reference exchange rates and a modern Nordic interface."
+    />
+    <meta name="theme-color" content="#eef3ef" />
+    <meta name="color-scheme" content="light" />
+    <meta property="og:title" content="NordRate — Nordic Currency Converter" />
+    <meta
+      property="og:description"
+      content="Daily reference exchange rates with Nordic clarity. No accounts, ads, cookies, or tracking."
+    />
+    <meta property="og:type" content="website" />
+    <title>NordRate — Nordic Currency Converter</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="style.css" />
+    <script type="module" src="script.js"></script>
   </head>
+
   <body>
-    <img src="img/money.png" alt="" class="money-img" />
-    <h1>Exchange Rate Calculator</h1>
-    <p>Choose the currency and the amounts to get the exchange rate</p>
+    <a class="skip-link" href="#converter">Skip to converter</a>
 
-    <div class="container">
-      <div class="currency">
-        <select id="currency-one">
-          <option value="AED">AED</option>
-          <option value="ARS">ARS</option>
-          <option value="AUD">AUD</option>
-          <option value="BGN">BGN</option>
-          <option value="BRL">BRL</option>
-          <option value="BSD">BSD</option>
-          <option value="CAD">CAD</option>
-          <option value="CHF">CHF</option>
-          <option value="CLP">CLP</option>
-          <option value="CNY">CNY</option>
-          <option value="COP">COP</option>
-          <option value="CZK">CZK</option>
-          <option value="DKK">DKK</option>
-          <option value="DOP">DOP</option>
-          <option value="EGP">EGP</option>
-          <option value="EUR">EUR</option>
-          <option value="FJD">FJD</option>
-          <option value="GBP">GBP</option>
-          <option value="GTQ">GTQ</option>
-          <option value="HKD">HKD</option>
-          <option value="HRK">HRK</option>
-          <option value="HUF">HUF</option>
-          <option value="IDR">IDR</option>
-          <option value="ILS">ILS</option>
-          <option value="INR">INR</option>
-          <option value="ISK">ISK</option>
-          <option value="JPY">JPY</option>
-          <option value="KRW">KRW</option>
-          <option value="KZT">KZT</option>
-          <option value="MXN">MXN</option>
-          <option value="MYR">MYR</option>
-          <option value="NOK">NOK</option>
-          <option value="NZD">NZD</option>
-          <option value="PAB">PAB</option>
-          <option value="PEN">PEN</option>
-          <option value="PHP">PHP</option>
-          <option value="PKR">PKR</option>
-          <option value="PLN">PLN</option>
-          <option value="PYG">PYG</option>
-          <option value="RON">RON</option>
-          <option value="RUB">RUB</option>
-          <option value="SAR">SAR</option>
-          <option value="SEK">SEK</option>
-          <option value="SGD">SGD</option>
-          <option value="THB">THB</option>
-          <option value="TRY">TRY</option>
-          <option value="TWD">TWD</option>
-          <option value="UAH">UAH</option>
-          <option value="USD" selected>USD</option>
-          <option value="UYU">UYU</option>
-          <option value="VND">VND</option>
-          <option value="ZAR">ZAR</option>
-        </select>
-        <input type="number" id="amount-one" placeholder="0" value="1" />
+    <div class="ambient ambient--north" aria-hidden="true"></div>
+    <div class="ambient ambient--south" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="NordRate home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" role="img">
+            <path d="M8 23.5V8.5h4.1l7.8 9.4V8.5H24v15h-4.1l-7.8-9.4v9.4H8Z" />
+          </svg>
+        </span>
+        <span class="brand__name">NORD<span>RATE</span></span>
+      </a>
+
+      <div class="header-badge" aria-label="Product characteristics">
+        <span class="header-badge__dot" aria-hidden="true"></span>
+        Reference FX · no tracking
       </div>
+    </header>
 
-      <div class="swap-rate-container">
-        <button class="btn" id="swap">
-          Swap
-        </button>
-        <div class="rate" id="rate"></div>
-      </div>
+    <main class="page-shell">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__copy">
+          <p class="eyebrow">Nordic clarity for everyday exchange</p>
 
-      <div class="currency">
-        <select id="currency-two">
-          <option value="AED">AED</option>
-          <option value="ARS">ARS</option>
-          <option value="AUD">AUD</option>
-          <option value="BGN">BGN</option>
-          <option value="BRL">BRL</option>
-          <option value="BSD">BSD</option>
-          <option value="CAD">CAD</option>
-          <option value="CHF">CHF</option>
-          <option value="CLP">CLP</option>
-          <option value="CNY">CNY</option>
-          <option value="COP">COP</option>
-          <option value="CZK">CZK</option>
-          <option value="DKK">DKK</option>
-          <option value="DOP">DOP</option>
-          <option value="EGP">EGP</option>
-          <option value="EUR" selected>EUR</option>
-          <option value="FJD">FJD</option>
-          <option value="GBP">GBP</option>
-          <option value="GTQ">GTQ</option>
-          <option value="HKD">HKD</option>
-          <option value="HRK">HRK</option>
-          <option value="HUF">HUF</option>
-          <option value="IDR">IDR</option>
-          <option value="ILS">ILS</option>
-          <option value="INR">INR</option>
-          <option value="ISK">ISK</option>
-          <option value="JPY">JPY</option>
-          <option value="KRW">KRW</option>
-          <option value="KZT">KZT</option>
-          <option value="MXN">MXN</option>
-          <option value="MYR">MYR</option>
-          <option value="NOK">NOK</option>
-          <option value="NZD">NZD</option>
-          <option value="PAB">PAB</option>
-          <option value="PEN">PEN</option>
-          <option value="PHP">PHP</option>
-          <option value="PKR">PKR</option>
-          <option value="PLN">PLN</option>
-          <option value="PYG">PYG</option>
-          <option value="RON">RON</option>
-          <option value="RUB">RUB</option>
-          <option value="SAR">SAR</option>
-          <option value="SEK">SEK</option>
-          <option value="SGD">SGD</option>
-          <option value="THB">THB</option>
-          <option value="TRY">TRY</option>
-          <option value="TWD">TWD</option>
-          <option value="UAH">UAH</option>
-          <option value="USD">USD</option>
-          <option value="UYU">UYU</option>
-          <option value="VND">VND</option>
-          <option value="ZAR">ZAR</option>
-        </select>
-        <input type="number" id="amount-two" placeholder="0" />
-      </div>
-    </div>
+          <h1 id="hero-title">
+            Know what your
+            <span>money is worth.</span>
+          </h1>
 
-    <script src="script.js"></script>
+          <p class="hero__lede">
+            A calm, fast currency converter built around daily reference rates,
+            clear provenance, and zero account friction.
+          </p>
+
+          <div class="quick-pairs" aria-labelledby="quick-pairs-title">
+            <p id="quick-pairs-title" class="quick-pairs__label">Quick pairs</p>
+            <div class="quick-pairs__list">
+              <button class="pair-chip" type="button" data-base="EUR" data-quote="USD">
+                EUR / USD
+              </button>
+              <button class="pair-chip" type="button" data-base="EUR" data-quote="SEK">
+                EUR / SEK
+              </button>
+              <button class="pair-chip" type="button" data-base="EUR" data-quote="NOK">
+                EUR / NOK
+              </button>
+              <button class="pair-chip" type="button" data-base="EUR" data-quote="UAH">
+                EUR / UAH
+              </button>
+            </div>
+          </div>
+
+          <div class="principles" aria-label="Product principles">
+            <div class="principle">
+              <span class="principle__index">01</span>
+              <div>
+                <strong>Private by design</strong>
+                <span>No account, cookies, ads, or analytics.</span>
+              </div>
+            </div>
+            <div class="principle">
+              <span class="principle__index">02</span>
+              <div>
+                <strong>Reference, not hype</strong>
+                <span>Daily mid-market data with the rate date exposed.</span>
+              </div>
+            </div>
+            <div class="principle">
+              <span class="principle__index">03</span>
+              <div>
+                <strong>Built for speed</strong>
+                <span>Semantic HTML, modern CSS, and Vanilla JavaScript only.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="converter-card" id="converter" aria-labelledby="converter-title">
+          <div class="converter-card__top">
+            <div>
+              <p class="card-kicker">Currency converter</p>
+              <h2 id="converter-title">Exchange reference</h2>
+            </div>
+
+            <div class="rate-status" id="rate-status" aria-live="polite">
+              <span class="rate-status__dot" aria-hidden="true"></span>
+              <span id="rate-status-text">Loading rate</span>
+            </div>
+          </div>
+
+          <form class="converter-form" id="converter-form" novalidate>
+            <div class="currency-block">
+              <label class="currency-block__label" for="amount-one">From</label>
+              <div class="money-control">
+                <label class="select-wrap" for="currency-one">
+                  <span class="sr-only">Source currency</span>
+                  <select id="currency-one" aria-label="Source currency">
+                    <option value="EUR" selected>EUR · Euro</option>
+                    <option value="USD">USD · US Dollar</option>
+                    <option value="GBP">GBP · British Pound</option>
+                    <option value="SEK">SEK · Swedish Krona</option>
+                    <option value="NOK">NOK · Norwegian Krone</option>
+                    <option value="DKK">DKK · Danish Krone</option>
+                    <option value="CHF">CHF · Swiss Franc</option>
+                    <option value="JPY">JPY · Japanese Yen</option>
+                    <option value="CAD">CAD · Canadian Dollar</option>
+                    <option value="AUD">AUD · Australian Dollar</option>
+                    <option value="PLN">PLN · Polish Zloty</option>
+                    <option value="UAH">UAH · Ukrainian Hryvnia</option>
+                  </select>
+                </label>
+
+                <input
+                  id="amount-one"
+                  class="amount-input"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  spellcheck="false"
+                  value="100"
+                  aria-describedby="amount-help"
+                />
+              </div>
+            </div>
+
+            <div class="swap-row">
+              <span class="swap-row__line" aria-hidden="true"></span>
+              <button
+                class="swap-button"
+                id="swap"
+                type="button"
+                aria-label="Swap source and target currencies"
+                title="Swap currencies"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m7.4 6.4 2.1-2.1-1.4-1.4L3.6 7.4l4.5 4.5 1.4-1.4-2.1-2.1H18v-2H7.4Zm9.2 9.2-2.1 2.1 1.4 1.4 4.5-4.5-4.5-4.5-1.4 1.4 2.1 2.1H6v2h10.6Z" />
+                </svg>
+              </button>
+              <span class="swap-row__line" aria-hidden="true"></span>
+            </div>
+
+            <div class="currency-block">
+              <label class="currency-block__label" for="amount-two">To</label>
+              <div class="money-control">
+                <label class="select-wrap" for="currency-two">
+                  <span class="sr-only">Target currency</span>
+                  <select id="currency-two" aria-label="Target currency">
+                    <option value="EUR">EUR · Euro</option>
+                    <option value="USD" selected>USD · US Dollar</option>
+                    <option value="GBP">GBP · British Pound</option>
+                    <option value="SEK">SEK · Swedish Krona</option>
+                    <option value="NOK">NOK · Norwegian Krone</option>
+                    <option value="DKK">DKK · Danish Krone</option>
+                    <option value="CHF">CHF · Swiss Franc</option>
+                    <option value="JPY">JPY · Japanese Yen</option>
+                    <option value="CAD">CAD · Canadian Dollar</option>
+                    <option value="AUD">AUD · Australian Dollar</option>
+                    <option value="PLN">PLN · Polish Zloty</option>
+                    <option value="UAH">UAH · Ukrainian Hryvnia</option>
+                  </select>
+                </label>
+
+                <input
+                  id="amount-two"
+                  class="amount-input"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-describedby="amount-help"
+                />
+              </div>
+            </div>
+
+            <p class="sr-only" id="amount-help">
+              Enter a positive number. Both amount fields can be edited.
+            </p>
+          </form>
+
+          <div class="error-panel" id="error-panel" role="alert" hidden>
+            <div>
+              <strong id="error-title">Rate unavailable</strong>
+              <p id="error-message">We could not refresh this currency pair.</p>
+            </div>
+            <button type="button" class="text-button" id="retry-button">Try again</button>
+          </div>
+
+          <div class="result-panel" aria-live="polite" aria-atomic="true">
+            <div class="result-panel__heading">
+              <span>Converted value</span>
+              <button
+                type="button"
+                class="copy-button"
+                id="copy-result"
+                aria-label="Copy conversion result"
+                disabled
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 7V4.75C8 3.78 8.78 3 9.75 3h7.5C18.22 3 19 3.78 19 4.75v9.5c0 .97-.78 1.75-1.75 1.75H15v2.25c0 .97-.78 1.75-1.75 1.75h-7.5C4.78 20 4 19.22 4 18.25v-9.5C4 7.78 4.78 7 5.75 7H8Zm2 0h3.25C14.22 7 15 7.78 15 8.75V14h2V5H10v2Zm-4 2v9h7V9H6Z" />
+                </svg>
+                <span id="copy-label">Copy</span>
+              </button>
+            </div>
+
+            <p class="result-value" id="result-value">—</p>
+            <p class="result-rate" id="rate">Fetching the latest reference rate…</p>
+
+            <dl class="rate-meta">
+              <div>
+                <dt>Rate date</dt>
+                <dd id="rate-date">—</dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd>
+                  <a href="https://frankfurter.dev/" target="_blank" rel="noreferrer">
+                    Frankfurter ↗
+                  </a>
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+          <p class="disclaimer">
+            Reference rates are informational and can differ from bank, card, and
+            cash exchange quotes. NordRate adds no fees or spread.
+          </p>
+
+          <noscript>
+            <p class="noscript-message">
+              JavaScript is required to request reference exchange rates.
+            </p>
+          </noscript>
+        </section>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>NordRate · a dependency-free frontend case study.</p>
+      <p>Daily reference exchange data via Frankfurter.</p>
+    </footer>
   </body>
 </html>
