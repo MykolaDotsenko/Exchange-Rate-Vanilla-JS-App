@@ -1,30 +1,41 @@
 # NordRate — Nordic Currency Converter
 
-A dependency-free currency converter rebuilt from a small Vanilla JavaScript exercise into a polished frontend engineering case study.
+[![Quality](https://github.com/MykolaDotsenko/Exchange-Rate-Vanilla-JS-App/actions/workflows/quality.yml/badge.svg)](https://github.com/MykolaDotsenko/Exchange-Rate-Vanilla-JS-App/actions/workflows/quality.yml)
+
+**A dependency-free currency converter rebuilt from a small Vanilla JavaScript exercise into a polished frontend engineering case study.**
+
+[**Open the live app →**](https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/) · [Architecture](./ARCHITECTURE.md) · [Browser tests](./e2e/converter.spec.js)
+
+![NordRate desktop interface](./docs/screenshots/nordrate-desktop.png)
 
 NordRate focuses on one job: **convert an amount quickly and make the reference rate easy to trust and understand**.
 
 ## Product capabilities
 
-- bidirectional currency conversion — edit either amount
-- dynamically loaded current-currency metadata
+- bidirectional conversion — edit either amount
+- current currency metadata loaded from the rate provider
 - quick EUR/USD, EUR/SEK, EUR/NOK, and EUR/UAH pair shortcuts
-- source/target currency swap
+- source/target swap with value preservation
 - visible reference-rate date
-- reciprocal rate display
-- copyable conversion summary
-- cancellable obsolete network requests
-- eight-second request timeout
-- seven-day last-known-rate fallback through localStorage
-- explicit offline/saved-rate state
-- input support for both decimal comma and decimal point
+- reciprocal-rate display
+- copyable conversion summary when the Clipboard API is available
+- decimal comma, decimal point, and common grouped-number input
+- explicit loading, fresh-rate, saved-rate, same-currency, invalid-input, and failure states
 - responsive desktop/mobile layout
 - reduced-motion and forced-colors support
 - zero ads, cookies, analytics, accounts, or tracking
 
-## Stack
+## Mobile
 
-### Runtime
+<img
+  src="./docs/screenshots/nordrate-mobile.png"
+  alt="NordRate mobile interface"
+  width="390"
+/>
+
+The mobile layout is verified in the browser suite at a 390 × 844 viewport, including a no-horizontal-overflow assertion.
+
+## Runtime stack
 
 - semantic HTML5
 - modern CSS
@@ -36,125 +47,174 @@ NordRate focuses on one job: **convert an amount quickly and make the reference 
 - Clipboard API
 - Intl formatting APIs
 
-### Quality
+There are **zero runtime dependencies**.
+
+## Verification stack
+
+Development and CI tooling is intentionally separate from the shipped product:
 
 - Node.js built-in test runner
-- Node syntax checks
-- zero-dependency static project invariants
+- Playwright
+- axe-core for automated WCAG A/AA checks
+- Lighthouse CI
 - GitHub Actions
+- Dependabot
 
-There are **zero runtime dependencies and zero npm package dependencies**.
+The exact verification dependency graph is committed in package-lock.json.
 
 ## Data source
 
-NordRate uses the versioned **Frankfurter v2** exchange-rate API:
+NordRate uses the versioned **Frankfurter v2** exchange-rate API.
 
-- no API key
-- daily reference exchange-rate data
-- currency metadata endpoint
-- single-pair rate endpoint
-- multiple institutional providers behind the blended reference feed
+The application requests:
 
-NordRate displays the rate date because these are reference rates, not live trading quotes.
+~~~text
+GET /v2/rate/{base}/{quote}
+GET /v2/currencies
+~~~
 
-The interface also makes clear that banks, card networks, cash exchanges, and payment providers can apply their own spreads or fees.
+The UI exposes the rate date because the product presents reference rates rather than pretending to provide a live bank or card quote.
+
+Banks, card networks, cash exchanges, and payment providers can apply their own spreads or fees. NordRate adds no fee or spread of its own.
 
 ## Architecture
 
 ~~~text
-semantic HTML + modern CSS
-            |
-            v
-        script.js
-   browser / API adapter
-            |
-            v
-     src/exchange.js
-      pure helpers
+index.html + style.css
+        |
+        v
+    script.js
+ browser orchestration
+     /         \
+    v           v
+rate-client   rate-cache
+    \           /
+     v         v
+    exchange.js
+   pure domain helpers
 ~~~
 
-The exchange module does not know about the DOM, fetch, localStorage, or UI state.
+The responsibilities are deliberately small and explicit:
 
-The browser adapter owns network cancellation, caching, events, and rendering.
+- src/exchange.js — parsing, conversion math, formatting, API-payload validation, currency normalization
+- src/rate-client.js — HTTP boundary and Frankfurter contract
+- src/rate-cache.js — versioned last-known-rate persistence
+- script.js — DOM discovery, interaction state, cancellation, timeouts, rendering, clipboard behavior
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for the detailed design rationale.
+The domain and infrastructure boundaries can be tested without a browser.
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the detailed trade-offs.
 
 ## Reliability model
 
 ### Race-safe pair changes
 
-Every new currency-pair request aborts the previous request with AbortController.
+Every new rate request aborts the obsolete request with AbortController.
 
-This prevents a slower old request from overwriting a newer user selection.
+The response is also checked against the currently selected pair before it can enter UI state, so a slow old request cannot overwrite a newer selection.
 
-### Bounded loading state
+### Bounded loading
 
-Rate requests time out after eight seconds.
+- rate lookup timeout: 8 seconds
+- currency-metadata timeout: 4 seconds
 
-The UI therefore cannot remain indefinitely in a fake loading state.
+The product does not remain indefinitely in a loading state when the network or upstream service stalls.
 
 ### Last-known-rate fallback
 
-Successful rates are saved per currency pair.
+Successful pair rates are stored behind a small versioned cache adapter.
+
+A cached entry contains:
+
+- currency pair
+- reference date
+- rate
+- local save timestamp
+
+Entries older than seven days, malformed values, corrupted JSON, invalid dates, and implausible future timestamps are rejected.
 
 On a later visit NordRate can:
 
-1. render the most recent saved rate immediately;
-2. request a fresh reference rate in the background;
-3. clearly switch to a Saved rate state if refresh fails.
-
-Cached rates older than seven days are rejected.
+1. render a recent saved rate immediately;
+2. attempt a fresh request;
+3. replace it with the fresh rate when available; or
+4. clearly label the fallback as **Saved rate** if refresh fails.
 
 ### API boundary validation
 
-A network response is accepted only if:
+A rate response reaches the UI only when:
 
 - base currency matches the requested base;
 - quote currency matches the requested quote;
 - rate is positive and numeric;
-- the response includes a valid ISO-style date.
+- date has the expected ISO form.
 
-Unexpected responses do not silently enter application state.
-
-## UX and visual direction
-
-The redesign follows a restrained Nordic product language:
-
-- snow/off-white background
-- graphite typography
-- pine/fjord accent palette
-- oversized editorial headline
-- generous negative space
-- translucent but restrained depth
-- high-contrast result surface
-- subtle motion instead of decorative animation overload
-- mobile-first reflow
-- no flag-based currency semantics
-- no external fonts or icon libraries
-
-The goal is a premium fintech feel without turning a tiny converter into a dependency-heavy UI demo.
+Unexpected upstream data fails closed instead of silently entering application state.
 
 ## Accessibility
 
-NordRate includes:
+The product relies primarily on native browser controls and semantic HTML.
 
-- semantic landmarks
-- one clear page heading
+Implemented behavior includes:
+
 - skip navigation
-- native select/input/button controls
-- visible keyboard focus
-- accessible labels
-- asynchronous status announcements
+- one clear page heading
+- labeled currency and amount controls
+- persistent visible keyboard focus
+- focused live feedback rather than announcing the entire result card
 - alert semantics for network failures
-- touch-friendly controls
+- touch-friendly targets
+- no color-only status meaning
 - reduced-motion support
 - forced-colors support
-- responsive text/layout
 - no hover-only functionality
+
+The browser suite runs automated axe analysis against:
+
+- normal converted-result state
+- invalid-input state
+- network-error state
+
+## Browser verification
+
+Playwright runs the real application with deterministic exchange-rate fixtures across:
+
+- Chromium
+- Firefox
+- WebKit
+- mobile Chromium
+
+The suite covers:
+
+- initial EUR → USD conversion
+- editing from either side
+- swap behavior
+- quick-pair selection
+- same-currency conversion
+- invalid and recoverable amount input
+- upstream 503 without cache
+- saved-rate fallback
+- obsolete-request race protection
+- mobile/desktop horizontal-overflow protection
+
+Portfolio screenshots are generated from the same deterministic browser environment used by the verification suite.
+
+## Lighthouse budgets
+
+CI runs three desktop Lighthouse passes and fails the build below these thresholds:
+
+| Category | Minimum |
+| --- | ---: |
+| Performance | 95 |
+| Accessibility | 100 |
+| Best Practices | 95 |
+| SEO | 100 |
+
+This gives the visual polish a measurable performance and accessibility budget instead of relying only on subjective review.
 
 ## Amount parsing
 
-The input accepts common formats such as:
+The input accepts common international forms such as:
 
 ~~~text
 12.5
@@ -164,11 +224,13 @@ The input accepts common formats such as:
 1.234,50
 ~~~
 
-The normalized value is used only for conversion. User-entered values are never sent anywhere except indirectly through the selected currency pair request; the amount itself is not transmitted to the rate API.
+The amount itself is not sent to the exchange-rate service. Only the selected currency pair is needed for a rate request.
 
-## Run locally
+## Local development
 
-Because the application uses native ES modules, serve it over HTTP:
+The shipped product needs no package installation.
+
+Serve the repository over HTTP because native ES modules are used:
 
 ~~~bash
 python -m http.server 8000
@@ -180,43 +242,76 @@ Then open:
 http://localhost:8000
 ~~~
 
-No package installation is required to run the product.
-
 ## Quality checks
 
-Requires Node.js 22+:
+Verification tooling requires Node.js 24+.
+
+Install the locked development toolchain:
+
+~~~bash
+npm ci
+~~~
+
+Static + unit checks:
 
 ~~~bash
 npm run check
 ~~~
 
-The quality gate runs:
+Cross-browser + accessibility suite:
 
-1. JavaScript syntax validation
-2. static HTML/CSS/project invariants
-3. pure exchange-domain unit tests
+~~~bash
+npx playwright install chromium firefox webkit
+npm run test:e2e
+~~~
 
-The same gate runs in GitHub Actions.
+Lighthouse budgets:
+
+~~~bash
+npm run test:lighthouse
+~~~
 
 ## Project structure
 
 ~~~text
 .
 ├── .github/
+│   ├── dependabot.yml
 │   └── workflows/
 │       └── quality.yml
+├── docs/
+│   └── screenshots/
+│       ├── nordrate-desktop.png
+│       └── nordrate-mobile.png
+├── e2e/
+│   ├── helpers/
+│   │   └── frankfurter.js
+│   ├── accessibility.spec.js
+│   ├── converter.spec.js
+│   └── screenshots.spec.js
 ├── scripts/
 │   └── check-project.mjs
 ├── src/
-│   └── exchange.js
+│   ├── exchange.js
+│   ├── rate-cache.js
+│   └── rate-client.js
 ├── tests/
-│   └── exchange.test.js
+│   ├── exchange.test.js
+│   ├── rate-cache.test.js
+│   └── rate-client.test.js
 ├── ARCHITECTURE.md
+├── LICENSE
 ├── README.md
 ├── favicon.svg
 ├── index.html
+├── lighthouserc.json
+├── package-lock.json
 ├── package.json
+├── playwright.config.js
+├── robots.txt
 ├── script.js
+├── sitemap.xml
+├── social-preview.png
 └── style.css
 ~~~
 
@@ -224,6 +319,10 @@ The same gate runs in GitHub Actions.
 
 > Spend complexity only where it protects user value.
 
-NordRate deliberately does not add React, a router, a state library, a component framework, an animation package, a backend, or a charting library.
+NordRate deliberately does **not** add React, a router, a state library, a component framework, a backend, or a runtime animation/charting package.
 
-For this product scope, the browser platform is enough.
+For a one-page reference converter, the browser platform is enough. The engineering signal comes from reliability, explicit boundaries, accessibility, verification, and proportionality — not dependency count.
+
+## License
+
+MIT © Mykola Dotsenko
