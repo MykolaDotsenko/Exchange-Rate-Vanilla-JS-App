@@ -6,6 +6,10 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -30,22 +34,18 @@ jobs:
       - name: Run static and unit quality gate
         run: npm run check
 
-      - name: Preserve generated lockfile
-        uses: actions/upload-artifact@v7
-        with:
-          name: npm-lockfile
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 3
-
   browser:
     name: Browser + accessibility
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
 
     steps:
-      - name: Check out repository
+      - name: Check out PR head
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -72,6 +72,30 @@ jobs:
             artifacts/screenshots/
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Bootstrap lockfile and portfolio screenshots
+        if: >-
+          success() &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          mkdir -p docs/screenshots
+          cp artifacts/screenshots/nordrate-desktop.png docs/screenshots/nordrate-desktop.png
+          cp artifacts/screenshots/nordrate-mobile.png docs/screenshots/nordrate-mobile.png
+          cp artifacts/screenshots/social-preview.png social-preview.png
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add package-lock.json docs/screenshots/nordrate-desktop.png docs/screenshots/nordrate-mobile.png social-preview.png
+
+          if git diff --cached --quiet; then
+            echo "Portfolio evidence is already current."
+            exit 0
+          fi
+
+          git commit -m "chore: add browser-verified portfolio evidence"
+          git push origin HEAD:${{ github.head_ref }}
 
   lighthouse:
     name: Lighthouse budgets
