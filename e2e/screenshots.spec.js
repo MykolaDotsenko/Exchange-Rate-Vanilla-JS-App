@@ -22,6 +22,8 @@ test("capture deterministic portfolio screenshots", async ({ page }, testInfo) =
   });
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await waitForReferenceRate(page);
   await page.screenshot({
     path: "artifacts/screenshots/nordrate-mobile.png",
     fullPage: true,
