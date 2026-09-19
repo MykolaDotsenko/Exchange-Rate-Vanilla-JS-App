@@ -29,7 +29,7 @@ test("conversion and reciprocal preserve pair math", () => {
   const rate = 1.17345;
   const converted = convertAmount(100, rate);
 
-  assert.equal(converted, 117.345);
+  assert.ok(Math.abs(converted - 117.345) < 1e-12);
   assert.ok(Math.abs(convertAmount(converted, reciprocalRate(rate)) - 100) < 1e-10);
 });
 
