@@ -1,11 +1,21 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, script] = await Promise.all([
+const [html, css, script, rateClient, rateCache] = await Promise.all([
   readFile(new URL("../index.html", import.meta.url), "utf8"),
   readFile(new URL("../style.css", import.meta.url), "utf8"),
   readFile(new URL("../script.js", import.meta.url), "utf8"),
+  readFile(new URL("../src/rate-client.js", import.meta.url), "utf8"),
+  readFile(new URL("../src/rate-cache.js", import.meta.url), "utf8"),
 ]);
+
+const PUBLIC_ORIGIN =
+  "https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/";
+const ALLOWED_EXTERNAL_ORIGINS = [
+  PUBLIC_ORIGIN,
+  "https://frankfurter.dev/",
+  "https://api.frankfurter.dev/",
+];
 
 function count(source, pattern) {
   return [...source.matchAll(pattern)].length;
@@ -16,14 +26,28 @@ assert.equal(count(html, /<h1\b/gi), 1, "index.html must contain exactly one h1"
 assert.match(html, /<html\s+lang="en"/i, "document language must be declared");
 assert.match(html, /name="viewport"/i, "viewport metadata is required");
 assert.match(html, /name="description"/i, "description metadata is required");
+assert.match(html, /rel="canonical"/i, "canonical URL is required");
+assert.match(html, /property="og:url"/i, "Open Graph URL is required");
+assert.match(html, /property="og:image"/i, "Open Graph image is required");
+assert.match(html, /name="twitter:card"/i, "Twitter card metadata is required");
 assert.match(html, /class="skip-link"/i, "skip navigation is required");
 assert.match(html, /aria-live="polite"/i, "live status feedback is required");
-assert.match(html, /type="module"\s+src="script\.js"/i, "JavaScript must load as a module");
-assert.doesNotMatch(
+assert.match(
   html,
-  /https?:\/\/(?!frankfurter\.dev)/i,
-  "runtime HTML should not depend on third-party assets"
+  /type="module"\s+src="script\.js"/i,
+  "JavaScript must load as a module"
 );
+
+const absoluteUrls = [...html.matchAll(/https:\/\/[^"'\s<>]+/g)].map(
+  ([url]) => url
+);
+
+for (const url of absoluteUrls) {
+  assert.ok(
+    ALLOWED_EXTERNAL_ORIGINS.some((origin) => url.startsWith(origin)),
+    "unexpected external URL in runtime HTML: " + url
+  );
+}
 
 assert.match(css, /:focus-visible/, "visible keyboard focus is required");
 assert.match(
@@ -40,10 +64,23 @@ assert.doesNotMatch(
 
 assert.match(
   script,
-  /api\.frankfurter\.dev\/v2/,
-  "the app must use the versioned Frankfurter v2 API"
+  /AbortController/,
+  "obsolete rate requests and metadata requests must be cancellable"
 );
-assert.match(script, /AbortController/, "obsolete rate requests must be cancellable");
-assert.match(script, /localStorage/, "last successful rates should support offline fallback");
+assert.match(
+  script,
+  /createRateCache/,
+  "browser orchestration must use the isolated cache boundary"
+);
+assert.match(
+  rateClient,
+  /api\.frankfurter\.dev\/v2/,
+  "the API boundary must use the versioned Frankfurter v2 endpoint"
+);
+assert.match(
+  rateCache,
+  /nordrate:rate:v1:/,
+  "cache entries must remain explicitly versioned"
+);
 
 console.log("Static project invariants passed.");
