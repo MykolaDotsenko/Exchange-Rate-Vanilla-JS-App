@@ -1,14 +1,24 @@
 {
   "name": "nordrate-currency-converter",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "description": "A dependency-free Nordic currency converter using daily reference rates.",
   "scripts": {
-    "test": "node --test",
-    "check": "node --check script.js && node --check src/exchange.js && node scripts/check-project.mjs && node --test"
+    "test": "npm run test:unit",
+    "test:unit": "node --test tests/*.test.js",
+    "check:static": "node --check script.js && node --check src/exchange.js && node --check src/rate-client.js && node --check src/rate-cache.js && node scripts/check-project.mjs",
+    "check": "npm run check:static && npm run test:unit",
+    "test:e2e": "playwright test",
+    "test:screenshots": "playwright test e2e/screenshots.spec.js --project=chromium",
+    "test:lighthouse": "lhci autorun"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@lhci/cli": "0.15.1",
+    "@playwright/test": "1.63.0"
   }
 }
