@@ -9,14 +9,46 @@
     />
     <meta name="theme-color" content="#eef3ef" />
     <meta name="color-scheme" content="light" />
+    <meta name="application-name" content="NordRate" />
+    <meta name="robots" content="index, follow" />
+    <link
+      rel="canonical"
+      href="https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/"
+    />
+    <meta property="og:site_name" content="NordRate" />
     <meta property="og:title" content="NordRate — Nordic Currency Converter" />
     <meta
       property="og:description"
       content="Daily reference exchange rates with Nordic clarity. No accounts, ads, cookies, or tracking."
     />
     <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/"
+    />
+    <meta
+      property="og:image"
+      content="https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/social-preview.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="NordRate currency converter in its Nordic interface"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NordRate — Nordic Currency Converter" />
+    <meta
+      name="twitter:description"
+      content="Daily reference exchange rates with Nordic clarity. No accounts, ads, cookies, or tracking."
+    />
+    <meta
+      name="twitter:image"
+      content="https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/social-preview.png"
+    />
     <title>NordRate — Nordic Currency Converter</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://api.frankfurter.dev" crossorigin />
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="script.js"></script>
   </head>
@@ -211,7 +243,7 @@
             <button type="button" class="text-button" id="retry-button">Try again</button>
           </div>
 
-          <div class="result-panel" aria-live="polite" aria-atomic="true">
+          <div class="result-panel">
             <div class="result-panel__heading">
               <span>Converted value</span>
               <button
@@ -228,7 +260,12 @@
               </button>
             </div>
 
-            <p class="result-value" id="result-value">—</p>
+            <p
+              class="result-value"
+              id="result-value"
+              aria-live="polite"
+              aria-atomic="true"
+            >—</p>
             <p class="result-rate" id="rate">Fetching the latest reference rate…</p>
 
             <dl class="rate-meta">
@@ -239,7 +276,11 @@
               <div>
                 <dt>Source</dt>
                 <dd>
-                  <a href="https://frankfurter.dev/" target="_blank" rel="noreferrer">
+                  <a
+                    href="https://frankfurter.dev/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Frankfurter ↗
                   </a>
                 </dd>
