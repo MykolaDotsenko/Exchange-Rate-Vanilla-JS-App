@@ -10,9 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  static-and-unit:
+    name: Static + unit
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
 
     steps:
       - name: Check out repository
@@ -23,5 +24,71 @@ jobs:
         with:
           node-version: 24
 
-      - name: Run quality gate
+      - name: Install exact development tooling
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Run static and unit quality gate
         run: npm run check
+
+      - name: Preserve generated lockfile
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-lockfile
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 3
+
+  browser:
+    name: Browser + accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install exact development tooling
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Run cross-browser, mobile, and axe suite
+        run: npm run test:e2e
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-evidence
+          path: |
+            playwright-report/
+            test-results/
+            artifacts/screenshots/
+          if-no-files-found: warn
+          retention-days: 7
+
+  lighthouse:
+    name: Lighthouse budgets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install exact development tooling
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Run Lighthouse CI budgets
+        run: npm run test:lighthouse
