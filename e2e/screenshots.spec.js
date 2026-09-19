@@ -28,4 +28,12 @@ test("capture deterministic portfolio screenshots", async ({ page }, testInfo) =
     path: "artifacts/screenshots/nordrate-mobile.png",
     fullPage: true,
   });
+
+  await page.setViewportSize({ width: 1200, height: 630 });
+  await page.goto("/");
+  await waitForReferenceRate(page);
+  await page.screenshot({
+    path: "artifacts/screenshots/social-preview.png",
+    fullPage: false,
+  });
 });
