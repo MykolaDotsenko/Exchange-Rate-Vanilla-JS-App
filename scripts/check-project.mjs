@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 
-const [html, css, script, rateClient, rateCache] = await Promise.all([
-  readFile(new URL("../index.html", import.meta.url), "utf8"),
-  readFile(new URL("../style.css", import.meta.url), "utf8"),
-  readFile(new URL("../script.js", import.meta.url), "utf8"),
-  readFile(new URL("../src/rate-client.js", import.meta.url), "utf8"),
-  readFile(new URL("../src/rate-cache.js", import.meta.url), "utf8"),
-]);
+const [html, css, script, rateClient, rateCache, readme, sitemap] =
+  await Promise.all([
+    readFile(new URL("../index.html", import.meta.url), "utf8"),
+    readFile(new URL("../style.css", import.meta.url), "utf8"),
+    readFile(new URL("../script.js", import.meta.url), "utf8"),
+    readFile(new URL("../src/rate-client.js", import.meta.url), "utf8"),
+    readFile(new URL("../src/rate-cache.js", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+    readFile(new URL("../sitemap.xml", import.meta.url), "utf8"),
+  ]);
 
 const PUBLIC_ORIGIN =
   "https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/";
@@ -90,6 +93,39 @@ assert.match(
   rateCache,
   /nordrate:rate:v1:/,
   "cache entries must remain explicitly versioned"
+);
+
+assert.match(
+  readme,
+  /Open the live app/,
+  "README must expose the live product"
+);
+assert.match(
+  readme,
+  /docs\/screenshots\/nordrate-desktop\.png/,
+  "README must include the real desktop screenshot"
+);
+assert.match(
+  readme,
+  /docs\/screenshots\/nordrate-mobile\.png/,
+  "README must include the real mobile screenshot"
+);
+assert.match(
+  sitemap,
+  /mykoladotsenko\.github\.io\/Exchange-Rate-Vanilla-JS-App/,
+  "sitemap must point to the canonical public URL"
+);
+
+await Promise.all(
+  [
+    "../LICENSE",
+    "../package-lock.json",
+    "../social-preview.png",
+    "../docs/screenshots/nordrate-desktop.png",
+    "../docs/screenshots/nordrate-mobile.png",
+    "../robots.txt",
+    "../sitemap.xml",
+  ].map((path) => access(new URL(path, import.meta.url)))
 );
 
 console.log("Static project invariants passed.");
