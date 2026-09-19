@@ -11,11 +11,11 @@ const [html, css, script, rateClient, rateCache] = await Promise.all([
 
 const PUBLIC_ORIGIN =
   "https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/";
-const ALLOWED_EXTERNAL_ORIGINS = [
-  PUBLIC_ORIGIN,
-  "https://frankfurter.dev/",
-  "https://api.frankfurter.dev/",
-];
+const ALLOWED_ORIGINS = new Set([
+  "https://mykoladotsenko.github.io",
+  "https://frankfurter.dev",
+  "https://api.frankfurter.dev",
+]);
 
 function count(source, pattern) {
   return [...source.matchAll(pattern)].length;
@@ -43,10 +43,19 @@ const absoluteUrls = [...html.matchAll(/https:\/\/[^"'\s<>]+/g)].map(
 );
 
 for (const url of absoluteUrls) {
+  const parsed = new URL(url);
+
   assert.ok(
-    ALLOWED_EXTERNAL_ORIGINS.some((origin) => url.startsWith(origin)),
+    ALLOWED_ORIGINS.has(parsed.origin),
     "unexpected external URL in runtime HTML: " + url
   );
+
+  if (parsed.origin === "https://mykoladotsenko.github.io") {
+    assert.ok(
+      url.startsWith(PUBLIC_ORIGIN),
+      "public project URL must remain scoped to the NordRate Pages path: " + url
+    );
+  }
 }
 
 assert.match(css, /:focus-visible/, "visible keyboard focus is required");
