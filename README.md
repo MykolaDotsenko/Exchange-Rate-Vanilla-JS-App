@@ -1,10 +1,10 @@
 # NordRate — Nordic Currency Converter
 
-[![Quality](https://github.com/MykolaDotsenko/Exchange-Rate-Vanilla-JS-App/actions/workflows/quality.yml/badge.svg)](https://github.com/MykolaDotsenko/Exchange-Rate-Vanilla-JS-App/actions/workflows/quality.yml)
+[![Quality](https://github.com/MykolaDotsenko/NordRate/actions/workflows/quality.yml/badge.svg)](https://github.com/MykolaDotsenko/NordRate/actions/workflows/quality.yml)
 
 **A dependency-free currency converter rebuilt from a small Vanilla JavaScript exercise into a polished frontend engineering case study.**
 
-[**Open the live app →**](https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/) · [Architecture](./ARCHITECTURE.md) · [Browser tests](./e2e/converter.spec.js)
+[**Open the live app →**](https://mykoladotsenko.github.io/NordRate/) · [Architecture](./ARCHITECTURE.md) · [Browser tests](./e2e/converter.spec.js)
 
 ![NordRate desktop interface](./docs/screenshots/nordrate-desktop.png)
 

@@ -13,7 +13,7 @@ const [html, css, script, rateClient, rateCache, readme, sitemap] =
   ]);
 
 const PUBLIC_ORIGIN =
-  "https://mykoladotsenko.github.io/Exchange-Rate-Vanilla-JS-App/";
+  "https://mykoladotsenko.github.io/NordRate/";
 const ALLOWED_ORIGINS = new Set([
   "https://mykoladotsenko.github.io",
   "https://frankfurter.dev",
@@ -112,7 +112,7 @@ assert.match(
 );
 assert.match(
   sitemap,
-  /mykoladotsenko\.github\.io\/Exchange-Rate-Vanilla-JS-App/,
+  /mykoladotsenko\.github\.io\/NordRate/,
   "sitemap must point to the canonical public URL"
 );
 
