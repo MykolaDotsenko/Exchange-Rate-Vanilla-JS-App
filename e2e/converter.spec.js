@@ -81,7 +81,7 @@ test("same-currency conversion is immediate and network-independent", async ({
 
   await page.getByLabel("Target currency").selectOption("EUR");
 
-  await expect(page.getByText("Same currency", { exact: true })).toBeVisible();
+  await expect(page.locator("#rate-status-text")).toHaveText("Same currency");
   await expect(page.locator("#amount-two")).toHaveValue("100");
   await expect(page.locator("#rate")).toHaveText("1 EUR = 1 EUR");
 });
