@@ -936,12 +936,18 @@
     .pair-chip,
     .rate-status,
     .header-badge {
-      forced-color-adjust: none;
       border: 1px solid CanvasText;
+      background: Canvas;
+      color: CanvasText;
     }
 
     .result-panel {
       background: CanvasText;
+      color: Canvas;
+    }
+
+    .result-panel a,
+    .result-panel button {
       color: Canvas;
     }
 
